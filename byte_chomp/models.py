@@ -34,6 +34,33 @@ class CachePerformanceStats(BaseModel):
     def total_misses(self):
         return self.compulsory + self.capacity + self.conflict
 
+    @property
+    def report(self):
+        hit_rate = (
+            self.hits / (self.hits + self.total_misses)
+            if (self.hits + self.total_misses) > 0
+            else 0
+        )
+        miss_rate = 1 - hit_rate
+        compulsory_miss_rate = (
+            self.compulsory / self.total_misses if self.total_misses > 0 else 0
+        )
+        capacity_miss_rate = (
+            self.capacity / self.total_misses if self.total_misses > 0 else 0
+        )
+        conflict_miss_rate = (
+            self.conflict / self.total_misses if self.total_misses > 0 else 0
+        )
+
+        return {
+            "requests": self.total_misses + self.hits,
+            "hit_rate": hit_rate,
+            "miss_rate": miss_rate,
+            "compulsory_miss_rate": compulsory_miss_rate,
+            "capacity_miss_rate": capacity_miss_rate,
+            "conflict_miss_rate": conflict_miss_rate,
+        }
+
 
 class AccessHistory(BaseModel):
     history: list[list[int]]
