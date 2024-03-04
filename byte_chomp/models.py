@@ -12,23 +12,11 @@ class CacheConfig(BaseModel):
 
 
 class CachePerformanceStats(BaseModel):
-    compulsory: int = Field(0, description="Count of compulsory misses")
-    capacity: int = Field(0, description="Count of capacity misses")
-    conflict: int = Field(0, description="Count of conflict misses")
-    hits: int = Field(0, description="Count of hits")
-
-    def increment_error(self, error_type: str) -> None:
-        if error_type == "Compulsory":
-            self.compulsory += 1
-        elif error_type == "Capacity":
-            self.capacity += 1
-        elif error_type == "Conflict":
-            self.conflict += 1
-        else:
-            raise ValueError("Invalid error type")
-
-    def increment_hit(self) -> None:
-        self.hits += 1
+    compact_output: int = 1
+    compulsory: int = 0
+    capacity: int = 0
+    conflict: int = 0
+    hits: int = 0
 
     @property
     def total_misses(self):
@@ -51,46 +39,59 @@ class CachePerformanceStats(BaseModel):
         conflict_miss_rate = (
             self.conflict / self.total_misses if self.total_misses > 0 else 0
         )
+        if self.compact_output:
+            report = [
+                self.total_misses + self.hits,
+                round(hit_rate, 4),
+                round(miss_rate, 4),
+                round(compulsory_miss_rate, 4),
+                round(capacity_miss_rate, 4),
+                round(conflict_miss_rate, 4),
+            ]
+            for i in report:
+                print(i, end=" ")
+            print("")
 
-        return {
+            return report
+
+        report = {
             "requests": self.total_misses + self.hits,
-            "hit_rate": hit_rate,
-            "miss_rate": miss_rate,
-            "compulsory_miss_rate": compulsory_miss_rate,
-            "capacity_miss_rate": capacity_miss_rate,
-            "conflict_miss_rate": conflict_miss_rate,
+            "hit_rate": round(hit_rate, 4),
+            "miss_rate": round(miss_rate, 4),
+            "compulsory": round(compulsory_miss_rate, 4),
+            "capacity": round(capacity_miss_rate, 4),
+            "conflict": round(conflict_miss_rate, 4),
+        }
+        print(report)
+        return report
+
+
+class CacheTable(BaseModel):
+    num_sets: int
+    associativity: int
+    table: dict[int, list[Optional[dict[str, Any]]]] = Field(default_factory=dict)
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        self.table = {
+            i: [None for _ in range(self.associativity)] for i in range(self.num_sets)
         }
 
-
-class AccessHistory(BaseModel):
-    history: list[list[int]]
-
-    def update_history(self, index: int, slot: int) -> None:
-        self.history[index].remove(slot)
-        self.history[index].append(slot)
-
-    def get_next_slot(self, index: int) -> int:
-        return self.history[index].pop(0)
-
-
-class CacheTable:
-    def __init__(self, num_sets: int, associativity: int):
-        self.table: list[list[Optional[dict[str, Any]]]] = [
-            [None for _ in range(associativity)] for _ in range(num_sets)
-        ]
-
     def get_cache_line(self, set_index: int) -> list[Optional[dict[str, Any]]]:
-        """Returns a specific cache line by set index."""
         return self.table[set_index]
 
     def update_cache_line(
         self, set_index: int, slot: int, entry: dict[str, Any]
     ) -> None:
-        """Updates a specific slot in a cache line."""
-        self.table[set_index][slot] = entry
+        if set_index in self.table:
+            self.table[set_index][slot] = entry
 
     def find_tag_in_line(self, set_index: int, tag: int) -> tuple[bool, int]:
-        for slot, entry in enumerate(self.table[set_index]):
-            if entry is not None and entry["tag"] == tag:
-                return True, slot
+        cache_line = self.get_cache_line(set_index)
+        for i, entry in enumerate(cache_line):
+            if entry and entry["tag"] == tag:
+                return True, i
         return False, -1
+
+    def is_full(self) -> bool:
+        return all([all(line) for line in self.table.values()])

@@ -42,5 +42,3 @@ if __name__ == "__main__":
     config = parse_cache_config(parser=parser)
 
     report = process_file(config=config)
-
-    print(report)

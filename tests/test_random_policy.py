@@ -1,21 +1,7 @@
-import pytest
-from cache_simulator import process_file
-from byte_chomp.models import CacheConfig
-
-TOLERANCE = 0.005
-
-TEST_ADDRESS_DIR = "tests/addresses"
+from tests.fixtures import run_test_case
 
 
-def test_cache_simulation_bin_100():
-    config = CacheConfig(
-        n_sets=256,
-        b_size=4,
-        assoc=1,
-        pol="R",
-        output_flag=1,
-        filename=f"{TEST_ADDRESS_DIR}/bin_100.bin",
-    )
+def test_random_replacement_bin_100():
     expected_stats = {
         "requests": 100,
         "hit_rate": 0.92,
@@ -24,25 +10,10 @@ def test_cache_simulation_bin_100():
         "capacity": 0.00,
         "conflict": 0.00,
     }
-
-    report = process_file(config=config)
-    assert report["requests"] == expected_stats["requests"]
-    assert abs(report["hit_rate"] - expected_stats["hit_rate"]) <= TOLERANCE
-    assert abs(report["miss_rate"] - expected_stats["miss_rate"]) <= TOLERANCE
-    # assert abs(report.get("compulsory", 0) - expected_stats.get("compulsory", 0)) <= TOLERANCE
-    # assert abs(report.get("capacity", 0) - expected_stats.get("capacity", 0)) <= TOLERANCE
-    # assert abs(report.get("conflict", 0) - expected_stats.get("conflict", 0)) <= TOLERANCE
+    run_test_case(256, 4, 1, "R", "bin_100.bin", expected_stats)
 
 
-def test_cache_simulation_bin_1000():
-    config = CacheConfig(
-        n_sets=128,
-        b_size=2,
-        assoc=4,
-        pol="R",
-        output_flag=1,
-        filename=f"{TEST_ADDRESS_DIR}/bin_1000.bin",
-    )
+def test_random_replacement_bin_1000():
     expected_stats = {
         "requests": 1000,
         "hit_rate": 0.864,
@@ -51,25 +22,10 @@ def test_cache_simulation_bin_1000():
         "capacity": 0.00,
         "conflict": 0.00,
     }
-
-    report = process_file(config=config)
-    assert report["requests"] == expected_stats["requests"]
-    assert abs(report["hit_rate"] - expected_stats["hit_rate"]) <= TOLERANCE
-    assert abs(report["miss_rate"] - expected_stats["miss_rate"]) <= TOLERANCE
-    # assert abs(report.get("compulsory", 0) - expected_stats.get("compulsory", 0)) <= TOLERANCE
-    # assert abs(report.get("capacity", 0) - expected_stats.get("capacity", 0)) <= TOLERANCE
-    # assert abs(report.get("conflict", 0) - expected_stats.get("conflict", 0)) <= TOLERANCE
+    run_test_case(128, 2, 4, "R", "bin_1000.bin", expected_stats)
 
 
-def test_cache_simulation_bin_10000():
-    config = CacheConfig(
-        n_sets=16,
-        b_size=2,
-        assoc=8,
-        pol="R",
-        output_flag=1,
-        filename=f"{TEST_ADDRESS_DIR}/bin_10000.bin",
-    )
+def test_random_replacement_bin_10000():
     expected_stats = {
         "requests": 10000,
         "hit_rate": 0.9298,
@@ -78,25 +34,10 @@ def test_cache_simulation_bin_10000():
         "capacity": 0.79,
         "conflict": 0.03,
     }
-
-    report = process_file(config=config)
-    assert report["requests"] == expected_stats["requests"]
-    assert abs(report["hit_rate"] - expected_stats["hit_rate"]) <= TOLERANCE
-    assert abs(report["miss_rate"] - expected_stats["miss_rate"]) <= TOLERANCE
-    # assert abs(report.get("compulsory", 0) - expected_stats.get("compulsory", 0)) <= TOLERANCE
-    # assert abs(report.get("capacity", 0) - expected_stats.get("capacity", 0)) <= TOLERANCE
-    # assert abs(report.get("conflict", 0) - expected_stats.get("conflict", 0)) <= TOLERANCE
+    run_test_case(16, 2, 8, "R", "bin_10000.bin", expected_stats, 0.01)
 
 
-def test_cache_simulation_vortex_persons_config1():
-    config = CacheConfig(
-        n_sets=512,
-        b_size=8,
-        assoc=2,
-        pol="R",
-        output_flag=1,
-        filename=f"{TEST_ADDRESS_DIR}/vortex.in.sem.persons.bin",
-    )
+def test_random_replacement_vortex_persons_config1():
     expected_stats = {
         "requests": 186676,
         "hit_rate": 0.8782,
@@ -105,25 +46,10 @@ def test_cache_simulation_vortex_persons_config1():
         "capacity": 0.93,
         "conflict": 0.02,
     }
-
-    report = process_file(config=config)
-    assert report["requests"] == expected_stats["requests"]
-    assert abs(report["hit_rate"] - expected_stats["hit_rate"]) <= TOLERANCE
-    assert abs(report["miss_rate"] - expected_stats["miss_rate"]) <= TOLERANCE
-    # assert abs(report.get("compulsory", 0) - expected_stats.get("compulsory", 0)) <= TOLERANCE
-    # assert abs(report.get("capacity", 0) - expected_stats.get("capacity", 0)) <= TOLERANCE
-    # assert abs(report.get("conflict", 0) - expected_stats.get("conflict", 0)) <= TOLERANCE
+    run_test_case(512, 8, 2, "R", "vortex.in.sem.persons.bin", expected_stats)
 
 
-def test_cache_simulation_vortex_persons_config2():
-    config = CacheConfig(
-        n_sets=1,
-        b_size=4,
-        assoc=32,
-        pol="R",
-        output_flag=1,
-        filename=f"{TEST_ADDRESS_DIR}/vortex.in.sem.persons.bin",
-    )
+def test_random_replacement_vortex_persons_config2():
     expected_stats = {
         "requests": 186676,
         "hit_rate": 0.544,
@@ -132,11 +58,4 @@ def test_cache_simulation_vortex_persons_config2():
         "capacity": 1.00,
         "conflict": 0.00,
     }
-
-    report = process_file(config=config)
-    assert report["requests"] == expected_stats["requests"]
-    assert abs(report["hit_rate"] - expected_stats["hit_rate"]) <= TOLERANCE
-    assert abs(report["miss_rate"] - expected_stats["miss_rate"]) <= TOLERANCE
-    # assert abs(report.get("compulsory", 0) - expected_stats.get("compulsory", 0)) <= TOLERANCE
-    # assert abs(report.get("capacity", 0) - expected_stats.get("capacity", 0)) <= TOLERANCE
-    # assert abs(report.get("conflict", 0) - expected_stats.get("conflict", 0)) <= TOLERANCE
+    run_test_case(1, 4, 32, "R", "vortex.in.sem.persons.bin", expected_stats)
