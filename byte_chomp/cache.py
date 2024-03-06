@@ -29,28 +29,28 @@ class Cache(BaseModel):
         return int(math.log2(self.block_size))
 
     def process_request(self, address: int) -> None:
-        set_index, tag = self._decode_address(address)
-        found, slot = self.cache_table.find_tag_in_line(set_index, tag)
+        index, tag = self._decode_address(address)
+        found, slot = self.cache_table.find_tag_in_line(index, tag)
 
         if found:
             self.performance_stats.hits += 1
-            self.replacement_policy.update_access(set_index, slot)
+            self.replacement_policy.update_access(index, slot)
         else:
-            self._replace_cache_line(tag, set_index)
-            self.replacement_policy.update_access(set_index, slot)
+            self._replace_cache_line(tag, index)
+            self.replacement_policy.update_access(index, slot)
 
     def _decode_address(self, address: int) -> tuple[int, int]:
-        set_index = (address >> self.offset_bits) & ((1 << self.index_bits) - 1)
+        index = (address >> self.offset_bits) & ((1 << self.index_bits) - 1)
         tag = address >> (self.offset_bits + self.index_bits)
-        return set_index, tag
+        return index, tag
 
-    def _replace_cache_line(self, tag: int, set_index: int):
-        cache_line = self.cache_table.get_cache_line(set_index)
-        replacement_index = self.replacement_policy.select_replacement_index(
-            set_index, cache_line
+    def _replace_cache_line(self, tag: int, index: int):
+        cache_line = self.cache_table.get_cache_line(index)
+        replacement_slot = self.replacement_policy.select_replacement_slot(
+            index, cache_line
         )
 
-        if cache_line[replacement_index] is None:
+        if cache_line[replacement_slot] is None:
             self.performance_stats.compulsory += 1
         elif self.cache_table.is_full():
             self.performance_stats.capacity += 1
@@ -58,7 +58,7 @@ class Cache(BaseModel):
             self.performance_stats.conflict += 1
 
         new_entry = {"tag": tag}
-        self.cache_table.update_cache_line(set_index, replacement_index, new_entry)
+        self.cache_table.update_cache_line(index, replacement_slot, new_entry)
 
 
 def get_cache_from_config(config: CacheConfig):

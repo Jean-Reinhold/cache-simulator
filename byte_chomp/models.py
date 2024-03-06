@@ -69,29 +69,26 @@ class CachePerformanceStats(BaseModel):
 class CacheTable(BaseModel):
     num_sets: int
     associativity: int
-    table: dict[int, list[Optional[dict[str, Any]]]] = Field(default_factory=dict)
+    table: list[list[Optional[dict[str, Any]]]] = Field(default_factory=list)
 
     def __init__(self, **data):
         super().__init__(**data)
-        self.table = {
-            i: [None for _ in range(self.associativity)] for i in range(self.num_sets)
-        }
+        self.table = [
+            [None for _ in range(self.associativity)] for i in range(self.num_sets)
+        ]
 
-    def get_cache_line(self, set_index: int) -> list[Optional[dict[str, Any]]]:
-        return self.table[set_index]
+    def get_cache_line(self, index: int) -> list[Optional[dict[str, Any]]]:
+        return self.table[index]
 
-    def update_cache_line(
-        self, set_index: int, slot: int, entry: dict[str, Any]
-    ) -> None:
-        if set_index in self.table:
-            self.table[set_index][slot] = entry
+    def update_cache_line(self, index: int, slot: int, entry: dict[str, Any]) -> None:
+        self.table[index][slot] = entry
 
-    def find_tag_in_line(self, set_index: int, tag: int) -> tuple[bool, int]:
-        cache_line = self.get_cache_line(set_index)
+    def find_tag_in_line(self, index: int, tag: int) -> tuple[bool, int]:
+        cache_line = self.get_cache_line(index)
         for i, entry in enumerate(cache_line):
             if entry and entry["tag"] == tag:
                 return True, i
         return False, -1
 
     def is_full(self) -> bool:
-        return all([all(line) for line in self.table.values()])
+        return all([all(line) for line in self.table])
